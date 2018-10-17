@@ -47,6 +47,9 @@ function main() {
     document.getElementById('printer_slice_multisampling').value = settings.offscreenMultisampling;
     document.getElementById('printer_slice_subsampling').value   = settings.printerSliceSubsampling;
 
+    // auto save
+    document.getElementById('auto_save_frequency').value = settings.autoSaveFrequency;
+
     // render color settings
     document.getElementById('slice_color').value = colorToString(settings.sliceColor);
 
@@ -176,7 +179,7 @@ function sliceCallback() {
 
 // render slices and return promise of a zip file
 async function asyncRender() {
-    const zip = new JSZip();
+    let zip = new JSZip();
 
     // render slices
     document.getElementById('slice_button').innerText = 'Rendering...';
@@ -197,8 +200,22 @@ async function asyncRender() {
         const filename = `slices/${sliceNumber}.png`;
 
         zip.file(filename, blob);
+
         sliceNumber += 1;
+
+        // Auto save if frequency is set
+        if (settings.autoSaveFrequency > 0 && sliceNumber % settings.autoSaveFrequency === 0) {
+            const partial_zipfile = await zip.generateAsync({ type: 'blob' });
+            saveAs(partial_zipfile);
+            zip = new JSZip();
+        }
     } while(slicing && slicer.loadNextSlice());
+
+    // Auto save if frequency is set
+    if (settings.autoSaveFrequency > 0) {
+        const partial_zipfile = await zip.generateAsync({ type: 'blob' });
+        saveAs(partial_zipfile);
+    }
 
     // if slicing wasn't cancelled, save zip file
     if(slicing) {
@@ -293,6 +310,8 @@ function updateSettingsCallback() {
     settings.printerSliceThickness   = Number(document.getElementById('printer_slice_thickness').value);
     settings.printerSliceSubsampling = Number(document.getElementById('printer_slice_subsampling').value);
     settings.offscreenMultisampling  = Number(document.getElementById('printer_slice_multisampling').value);
+
+    settings.autoSaveFrequency = Number(document.getElementById('auto_save_frequency').value);
 
     const angle = degToRad(Number(document.getElementById('slice_plane_angle').value));
     slicer.setPlaneAngle(angle);

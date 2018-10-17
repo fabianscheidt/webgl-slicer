@@ -27,3 +27,6 @@ export let lineWidthBottom = 1;
 // it is independent of printerSliceSubsampling
 export let offscreenMultisampling = 8;
 
+// Auto save frequency
+// Number of slices after which a new zip file is created
+export let autoSaveFrequency = -1;
