@@ -19,8 +19,12 @@ export let printerSliceSubsampling = 1;
 export let sliceColor = [255, 255, 255];
 
 // line segment to 3d solid settings
-export let lineWidthTop    = 1;
-export let lineWidthBottom = 1;
+export let lineWidths = {
+    'default': {
+        top: 0.1,
+        bottom: 0.1
+    }
+};
 
 // WebGL offscreen rendering multisampling (antialiasing)
 // this is a rendering setting, not a slicing setting

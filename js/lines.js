@@ -25,9 +25,24 @@ function parseArrayBuffer(arraybuffer) {
     const vertices = [];
     const indices  = [];
 
+    let group = 'default';
+    settings.lineWidths = {};
+
     // read the OBJ and extract vertex and line segment information
     lines.forEach(line => {
         const words = line.split(/\s+/);
+
+        // group data:
+        // g Layer_01
+        if(words[0] === 'g') {
+            group = words[1];
+            if (!settings.lineWidths[group]) {
+                settings.lineWidths[group] = {
+                    top: 0.1,
+                    bottom: 0.1
+                }
+            }
+        }
 
         // vertex data:
         // v 0.123 0.234 0.345
@@ -35,7 +50,7 @@ function parseArrayBuffer(arraybuffer) {
             const v1 = Number(words[1]);
             const v2 = Number(words[2]);
             const v3 = Number(words[3]);
-            vertices.push([v1, v2, v3]);
+            vertices.push([v1, v2, v3, group]);
         }
 
         // polyline data (numbers are vertex indices):
@@ -67,6 +82,16 @@ function parseArrayBuffer(arraybuffer) {
         const v1 = vertices[index[1]-1];
         lineData.push([v0, v1]);
     });
+
+    // Set default settings if the file was not using groups
+    if (group === 'default') {
+        settings.lineWidths = {
+            'default': {
+                top: 0.1,
+                bottom: 0.1
+            }
+        };
+    }
 }
 
 
@@ -74,10 +99,6 @@ function parseArrayBuffer(arraybuffer) {
 // for each line segment, we construct a frustum of a square pyramid
 // (basically a long rectangular prism when w0 equals w1)
 function make3dModel() {
-    // widths at first point and second point, respectively
-    const w0 = settings.lineWidthBottom / 2;
-    const w1 = settings.lineWidthTop / 2;
-
     // 6 faces per line segment * 2 triangles per face
     const numTriangles = lineData.length * 12;
     // 3 vertices per triangle, 3 floats for x,y,z coordinates of each vertex
@@ -135,6 +156,11 @@ function make3dModel() {
         // opposite directions
         const n3 = v3.mulScalar(n1, -1.0);
         const n4 = v3.mulScalar(n2, -1.0);
+
+        // widths at first point and second point depending on group
+        const group = a[3];
+        const w0 = settings.lineWidths[group].bottom / 2;
+        const w1 = settings.lineWidths[group].top / 2;
 
         // compute positions of rectangluar prism corners
         // positions designated such that 1,2,3; 3,4,1; 5,6,7; 7,8,5

@@ -31,9 +31,8 @@ let rerenderSlice = true;
 
 function main() {
     // set input field default values
-    // line to 3d settings
-    document.getElementById('width_top').value = settings.lineWidthTop;
-    document.getElementById('width_bottom').value = settings.lineWidthBottom;
+    // Line widths
+    initLineWidthSettings();
 
     // printer dimension settings
     document.getElementById('printer_pixels_x').value = settings.printerPixelsX;
@@ -121,6 +120,52 @@ function initCallbacks() {
 
 
 
+// Builds the list of line width settings
+function initLineWidthSettings() {
+    const settingsEl = document.getElementById('line_width_layers');
+    settingsEl.innerHTML = '';
+
+    const keys = Object.keys(settings.lineWidths);
+    keys.forEach(function (key) {
+        const wrapper = document.createElement('div');
+        settingsEl.appendChild(wrapper);
+
+        const keyLabel = document.createElement('div');
+        keyLabel.innerText = key;
+        wrapper.appendChild(keyLabel);
+
+        const topWrapper = document.createElement('div');
+        topWrapper.className = 'flex-row justify';
+        wrapper.appendChild(topWrapper);
+
+        const topLabel = document.createElement('div');
+        topLabel.innerText = 'Top';
+        topWrapper.appendChild(topLabel);
+
+        const topInput = document.createElement('input');
+        topInput.type = 'text';
+        topInput.size = 4;
+        topInput.value = settings.lineWidths[key].top;
+        topWrapper.appendChild(topInput);
+
+        const bottomWrapper = document.createElement('div');
+        bottomWrapper.className = 'flex-row justify';
+        wrapper.appendChild(bottomWrapper);
+
+        const bottomLabel = document.createElement('div');
+        bottomLabel.innerText = 'Bottom';
+        bottomWrapper.appendChild(bottomLabel);
+
+        const bottomInput = document.createElement('input');
+        bottomInput.type = 'text';
+        bottomInput.size = 4;
+        bottomInput.value = settings.lineWidths[key].bottom;
+        bottomWrapper.appendChild(bottomInput);
+    });
+}
+
+
+
 
 // handle a file upload
 function fileUploadCallback() {
@@ -142,6 +187,7 @@ function fileUploadCallback() {
         if(filetype === 'line') {
             lines.parseArrayBuffer(reader.result);
             lines.make3dModel();
+            initLineWidthSettings();
         }
 
         renderer.update();
@@ -282,8 +328,15 @@ function fileTypeCallback() {
 }
 
 function lineSettingsCallback() {
-    settings.lineWidthTop    = Number(document.getElementById('width_top').value);
-    settings.lineWidthBottom = Number(document.getElementById('width_bottom').value);
+    const settingsEl = document.getElementById('line_width_layers');
+    const keys = Object.keys(settings.lineWidths);
+    for (let i=0; i < settingsEl.children.length; i++) {
+        const child = settingsEl.children[i];
+        const inputs = child.getElementsByTagName('input');
+        settings.lineWidths[keys[i]].top = inputs[0].value;
+        settings.lineWidths[keys[i]].bottom = inputs[1].value;
+    }
+    console.log(settings.lineWidths);
     lines.make3dModel();
     rerenderSlice = true;
 }
